@@ -1,229 +1,138 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dungeontester;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Random;
 import java.util.Scanner;
 
-/**
- *
- * @author jeffr
- */
+/** Builds and runs a dungeon represented by a custom doubly linked list. */
 public class DungeonContainer {
-
+    private final Random random = new Random();
     private DungeonCell head;
     private DungeonCell tail;
-    private int size;
-    private Iterator movement;
-
-    public DungeonContainer() {
-        this.head = null;
-        this.tail = null;
-    }
-
-    public void insert(Object val) {
-        DungeonCell cell = new DungeonCell(val);
-        if (head == null) {
-            head = cell;
-            tail = cell;
-            return;
-        }
-        tail.next = cell;
-        //pointing cell added to the tail connected 
-        cell.prev = tail;
-        //head.previous is connecting to the cell just added
-        head.prev = cell;
-        //connecting to the the head 
-        cell.next = head;
-        //tail just added
-        tail = cell;
-
-    }
-
-    public void scan() {
-        int val;
-        System.out.println("Press 7 to move ");
-        Scanner player = new Scanner(System.in);
-        val = player.nextInt();
-        if (val == 7) {
-            forward();
-        }
-        display();
-    }
+    private DungeonCell playerCell;
+    private MainCharacter player;
+    private int level = 1;
 
     public void run() {
-        MainCharacter stats = new MainCharacter("jeff", 150, 50, 50, 30, 0, 1);
-        int play;
-        boolean answer = true;
-        Scanner game = new Scanner(System.in);
-        while (answer) {
+        try (Scanner scanner = new Scanner(System.in)) {
+            printBanner();
+            System.out.print("What is your adventurer name? ");
+            String name = scanner.nextLine().trim();
+            player = new MainCharacter(name.isEmpty() ? "Adventurer" : name);
+            createDungeon();
+            gameLoop(scanner);
+        }
+    }
 
-            while (answer) {
-                System.out.println("Welcome to the Dungeon game");
-                System.out.println("----------------------------");
-                System.out.println("");
-                System.out.println("(1)MAP");
-                System.out.println("(2)PLAYER STATS");
-                System.out.println("(3)START");
-                System.out.println("(4)EXIT");
-                play = game.nextInt();
-                if (play == 1) {
-                    display();
-                }
-                if (play == 2) {
-                    System.out.println("Health: " + stats.gethealth());
-                    System.out.println("Speed: " + stats.getspeed());
-                    System.out.println("Attack: " + stats.getatk());
-                    System.out.println("HeroLevel: " + stats.getherolevel());
-                    System.out.println("Defence: " + stats.getDef());
-                } else if (play == 3) {
-                    scan();
+    private void createDungeon() {
+        clear();
+        int roomCount = 7 + (level * 2);
+        List<Encounter> rooms = new ArrayList<>();
+        rooms.add(new Empty("Entrance"));
+        rooms.add(new Exit());
+        String[] enemies = {"Cave Goblin", "Moss Goblin", "Ash Goblin", "Iron Goblin"};
+        while (rooms.size() < roomCount) {
+            if (random.nextInt(100) < 28) rooms.add(new Item("Moonleaf Potion", 25));
+            else if (random.nextInt(100) < 58) rooms.add(new GoblinEnemy(enemies[random.nextInt(enemies.length)], level, random));
+            else rooms.add(new Empty("Forgotten Chamber"));
+        }
+        Collections.shuffle(rooms.subList(1, rooms.size()), random);
+        for (Encounter room : rooms) insert(room);
+        playerCell = head;
+        System.out.println("\nLevel " + level + " begins. Find the Moon Gate [E] and survive the dungeon.");
+        inspectCurrentRoom();
+    }
 
-                } else if (play == 4) {
-                    answer = false;
-                } else {
-                    System.out.println("Enter 1-4");
-                }
-
+    private void gameLoop(Scanner scanner) {
+        while (player.isAlive()) {
+            System.out.println("\n[M]ap  [L]eft  [R]ight  [S]tats  [I]nventory  [H]elp  [Q]uit");
+            System.out.print("> ");
+            String choice = scanner.nextLine().trim().toLowerCase();
+            switch (choice) {
+                case "m" -> printMap();
+                case "l" -> move(-1, scanner);
+                case "r" -> move(1, scanner);
+                case "s" -> System.out.println(player.statistics());
+                case "i" -> usePotion();
+                case "h" -> printHelp();
+                case "q" -> { System.out.println("The dungeon waits for your return."); return; }
+                default -> System.out.println("Choose one of the displayed commands.");
             }
         }
+        System.out.println("\nYour lantern fades. Game over.");
     }
 
-    public DungeonCell getHead() {
-        return head;
+    private void move(int direction, Scanner scanner) {
+        DungeonCell destination = direction < 0 ? playerCell.getPrevious() : playerCell.getNext();
+        if (destination == null) { System.out.println("A solid wall blocks that direction."); return; }
+        playerCell = destination;
+        inspectCurrentRoom();
+        Encounter encounter = playerCell.getValue();
+        if (encounter instanceof Item item) collectItem(item);
+        else if (encounter instanceof GoblinEnemy enemy) battle(enemy, scanner);
+        else if (encounter instanceof Exit) nextLevel(scanner);
     }
 
-    public void cells() {
+    private void inspectCurrentRoom() { System.out.println("\n" + playerCell.getValue().describe()); }
 
-        insert(new GoblinEnemy(90, 45, 65, 10, 50, 0));
-        insert(new Empty("Empty", 0, 0, 0, 0, 0, 0));
-        insert(new GoblinEnemy(9, 9, 9, 9, 9, 9));
-        insert(new Empty("Empty", 0, 0, 0, 0, 0, 0));
-        insert(new GoblinEnemy(90, 45, 65, 10, 50, 0));
-        insert(new Empty("Empty", 0, 0, 0, 0, 0, 0));
-        insert(new Exit("Exit", 0, 0, 0, 0, 0, 0));
-        insert(new GoblinEnemy(90, 45, 65, 10, 50, 0));
-        insert(new Empty("Empty", 0, 0, 0, 0, 0, 0));
-        insertIndex(new MainCharacter("jeff", 150, 50, 50, 30, 0, 1), 6);
-
-        movement = new Iterator(this);
+    private void collectItem(Item item) {
+        player.addPotion();
+        playerCell.setValue(new Empty("Cleared Chamber"));
+        System.out.println("You collect " + item.getName() + ". You now have " + player.getPotions() + " potion(s).");
     }
 
-    public void move() {
-        int m = 1;
-        int n = 1;
-
-        removeCell(head, new MainCharacter());
-        insertIndex(60, 7);
-
-    }
-
-    //This will insert an object at the given position
-    public void insertIndex(Object newElement, int position) {
-        DungeonCell newBox = new DungeonCell(newElement);
-        newBox.val = newElement;
-        newBox.next = null;
-        DungeonCell temp = head;
-        int NoOfElements = 0;
-
-        if (temp != null) {
-            NoOfElements++;
-            temp = temp.next;
+    private void battle(GoblinEnemy enemy, Scanner scanner) {
+        System.out.println("\nCombat begins with " + enemy.getName() + "!");
+        while (player.isAlive() && !enemy.isDefeated()) {
+            System.out.println("[F]ight  [P]otion  [S]tats");
+            System.out.print("> ");
+            String action = scanner.nextLine().trim().toLowerCase();
+            if (action.equals("s")) { System.out.println(player.statistics()); continue; }
+            if (action.equals("p")) { usePotion(); continue; }
+            if (!action.equals("f")) { System.out.println("Choose F, P, or S."); continue; }
+            int playerDamage = Math.max(1, player.getAttack() + random.nextInt(7) - enemy.getDefence());
+            enemy.takeDamage(playerDamage);
+            System.out.println("You strike for " + playerDamage + " damage.");
+            if (enemy.isDefeated()) break;
+            int enemyDamage = Math.max(1, enemy.getAttack() + random.nextInt(5) - player.getDefence());
+            player.takeDamage(enemyDamage);
+            System.out.println(enemy.getName() + " hits you for " + enemyDamage + " damage. Health: " + player.getHealth() + "/" + player.getMaxHealth());
         }
-        while (temp != head) {
-            NoOfElements++;
-            temp = temp.next;
-        }
-
-        if (position < 1 || position > (NoOfElements + 1)) {
-            System.out.print("\nInvalid position.");
-        } else if (position == 1) {
-
-            if (head == null) {
-                head = newBox;
-                head.next = head;
-            } else {
-                while (temp.next != head) {
-                    temp = temp.next;
-                }
-                newBox.next = head;
-                head = newBox;
-                temp.next = head;
-            }
-        } else {
-            temp = head;
-            for (int i = 1; i < position - 1; i++) {
-                temp = temp.next;
-            }
-            newBox.next = temp.next;
-            temp.next = newBox;
+        if (enemy.isDefeated()) {
+            System.out.println("You defeated " + enemy.getName() + " and gained " + enemy.getExperienceReward() + " XP.");
+            if (player.gainExperience(enemy.getExperienceReward())) System.out.println("Level up! You are now level " + player.getLevel() + ". Your health is restored.");
+            playerCell.setValue(new Empty("Cleared Chamber"));
         }
     }
 
-    public DungeonCell removeCell(DungeonCell head, Object key) {
-        if (head == null) {
-            return null;
-        }
-
-        DungeonCell curr = head, prev = new DungeonCell();
-        while (curr.val != key) {
-            if (curr.next == head) {
-                break;
-            }
-
-            prev = curr;
-            curr = curr.next;
-        }
-
-        // Check if node is only node
-        if (curr == head && curr.next == head) {
-            head = null;
-            return head;
-        }
-
-        // If more than one cell, will check if
-        // it is first cell
-        if (curr == head) {
-            prev = head;
-            while (prev.next != head) {
-                prev = prev.next;
-            }
-            head = curr.next;
-            prev.next = head;
-        } // check if node is last cell
-        else if (curr.next == head) {
-            prev.next = head;
-        } else {
-            prev.next = curr.next;
-        }
-        return head;
+    private void nextLevel(Scanner scanner) {
+        System.out.print("Step through the Moon Gate? [Y/N] ");
+        if (!scanner.nextLine().trim().equalsIgnoreCase("y")) return;
+        level++;
+        player.heal(15);
+        createDungeon();
     }
 
-    public void forward() {
-        DungeonCell Cell = new DungeonCell();
+    private void usePotion() {
+        if (!player.usePotion()) { System.out.println("Your inventory has no potions."); return; }
+        System.out.println("You use a Moonleaf Potion. Health: " + player.getHealth() + "/" + player.getMaxHealth());
+    }
 
-        head = movement.next();
-        Cell.val = new MainCharacter();
-        if (movement.next() == Cell.val) {
-            System.out.println("You have encountered an enemy");
+    private void printMap() {
+        StringBuilder map = new StringBuilder("Dungeon: ");
+        Iterator iterator = new Iterator(head);
+        while (iterator.hasNext()) {
+            DungeonCell cell = iterator.next();
+            map.append(cell == playerCell ? "[P]" : "[" + cell.getValue().getSymbol() + "]");
+            if (iterator.hasNext()) map.append("—");
         }
-
+        System.out.println(map);
     }
 
-    public void previous() {
-        head = movement.previous();
-    }
-
-    public void display() {
-        DungeonCell cell = head;
-        if (head != null) {
-            do {
-                System.out.print(cell.val + "---");
-                cell = cell.next;
-            } while (cell != head);
-            System.out.println();
-        }
-    }
-
+    private void printHelp() { System.out.println("Reach the Moon Gate [E]. Defeat goblins [G], collect items [!], and use potions to survive."); }
+    private void printBanner() { System.out.println("\n=== DUNGEON OF THE MOON GATE ===\nA linked-list dungeon crawler. Explore, battle, and descend."); }
+    private void clear() { head = null; tail = null; }
+    public void insert(Encounter value) { DungeonCell cell = new DungeonCell(value); if (head == null) head = tail = cell; else { tail.setNext(cell); cell.setPrevious(tail); tail = cell; } }
 }

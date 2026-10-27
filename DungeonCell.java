@@ -1,43 +1,16 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dungeontester;
 
-/**
- *
- * @author jeffr
- */
+/** Node used by the custom doubly linked-list dungeon. */
 public class DungeonCell {
+    private Encounter value;
+    private DungeonCell next;
+    private DungeonCell previous;
 
-    Object val;
-    DungeonCell next;
-    DungeonCell prev;
-
-    public DungeonCell() {
-    }
-
-    public DungeonCell(Object val) {
-        this.val = val;
-
-    }
-
-    public void setNext(DungeonCell bx) {
-        next = bx;
-
-    }
-
-    public DungeonCell getNext() {
-        return next;
-    }
-
-    public void setPrev(DungeonCell bx) {
-        next = bx;
-
-    }
-
-    public DungeonCell getPrev() {
-        return prev;
-    }
-
+    public DungeonCell(Encounter value) { this.value = value; }
+    public Encounter getValue() { return value; }
+    public void setValue(Encounter value) { this.value = value; }
+    public DungeonCell getNext() { return next; }
+    public void setNext(DungeonCell next) { this.next = next; }
+    public DungeonCell getPrevious() { return previous; }
+    public void setPrevious(DungeonCell previous) { this.previous = previous; }
 }

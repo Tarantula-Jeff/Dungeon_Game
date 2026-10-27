@@ -1,36 +1,9 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dungeontester;
 
-/**
- *
- * @author jeffr
- */
+/** Small iterator for walking through the dungeon cells. */
 public class Iterator {
-
-    DungeonCell cell;
-
-    public Iterator(DungeonContainer iTer) {
-        cell = iTer.getHead();
-    }
-
-    public DungeonCell next() {
-        cell = cell.next;
-        return cell;
-    }
-
-    public DungeonCell previous() {
-        cell = cell.prev;
-        return cell;
-    }
-
-    public boolean hasNext() {
-        if (cell.next != null) {
-            return true;
-        }
-        return false;
-    }
-
+    private DungeonCell current;
+    public Iterator(DungeonCell start) { current = start; }
+    public boolean hasNext() { return current != null; }
+    public DungeonCell next() { DungeonCell result = current; if (current != null) current = current.getNext(); return result; }
 }

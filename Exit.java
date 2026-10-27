@@ -1,32 +1,7 @@
-/*
- * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
- * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
- */
 package dungeontester;
 
-/**
- *
- * @author jeffr
- */
+/** The exit that completes a dungeon level. */
 public class Exit extends Encounter {
-
-    private DungeonCell empty;
-
-    public Exit() {
-        empty = null;
-    }
-
-    public Exit(String player1, int health, int attack,
-            int speed, int defense2, int Exp, int herolv) {
-        super("Exit", health, attack, speed, defense2, Exp, herolv);
-
-    }
-
-    public String getname1() {
-        return getN();
-    }
-
-    public String toString() {
-        return getname1();
-    }
+    public Exit() { super("Moon Gate", 'E'); }
+    @Override public String describe() { return "A silver gate hums with energy. Step through it to descend deeper."; }
 }
